@@ -61,10 +61,9 @@ function GetPageGroups()
 function GetPageInfos()
 {
     $result = array();
-    $result[] = array('caption' => 'Checkin Evento', 'short_caption' => 'Checkin Evento', 'filename' => 'convocacoeseventos.php', 'name' => 'convocacoeseventos', 'group_name' => 'Voluntários', 'add_separator' => false, 'description' => '');
-    $result[] = array('caption' => 'Funcoes', 'short_caption' => 'Funcoes', 'filename' => 'funcoes.php', 'name' => 'funcoes', 'group_name' => 'Voluntários', 'add_separator' => false, 'description' => '');
-    $result[] = array('caption' => 'Tipo Função', 'short_caption' => 'Tipo Função', 'filename' => 'tipofuncao.php', 'name' => 'tipofuncao', 'group_name' => 'Voluntários', 'add_separator' => false, 'description' => '');
     $result[] = array('caption' => 'Consulta Voluntários', 'short_caption' => 'Consulta Voluntários', 'filename' => 'CONSULTAVOLUNTARIO.php', 'name' => 'CONSULTAVOLUNTARIO', 'group_name' => 'Voluntários', 'add_separator' => false, 'description' => '');
+    $result[] = array('caption' => 'Checkin Evento', 'short_caption' => 'Checkin Evento', 'filename' => 'CHECKIN_EVENTO.php', 'name' => 'CHECKIN_EVENTO', 'group_name' => 'Voluntários', 'add_separator' => false, 'description' => '');
+    $result[] = array('caption' => 'Checkin Evento Ministério', 'short_caption' => 'Checkin Evento Ministério', 'filename' => 'CHECKIN_EVENTO_MINISTERIO.php', 'name' => 'CHECKIN_EVENTO_MINISTERIO', 'group_name' => 'Voluntários', 'add_separator' => false, 'description' => '');
     return $result;
 }
 

@@ -20,10 +20,9 @@ $appGrants = array();
 
 $dataSourceRecordPermissions = array();
 
-$tableCaptions = array('convocacoeseventos' => 'Checkin Evento',
-'funcoes' => 'Funcoes',
-'tipofuncao' => 'Tipo Função',
-'CONSULTAVOLUNTARIO' => 'Consulta Voluntários');
+$tableCaptions = array('CONSULTAVOLUNTARIO' => 'Consulta Voluntários',
+'CHECKIN_EVENTO' => 'Checkin Evento',
+'CHECKIN_EVENTO_MINISTERIO' => 'Checkin Evento Ministério');
 
 $usersTableInfo = array(
     'TableName' => 'usuario',

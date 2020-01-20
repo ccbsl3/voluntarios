@@ -67,8 +67,11 @@
             foto_voluntario = :foto_voluntario,
             thumb_voluntario = :thumb_voluntario,
             dt_alteracao = now()
-            where id_aux = :old_id_aux');
-            $deleteQuery = array();
+            where id_aux = :old_id_aux', 
+            'INSERT INTO convocacoeseventos
+            (Id_Evento,Id_Voluntario,St_VoluntarioCompareceu,Dt_Hr_Chegada,Dt_Hr_Saida,ID_AUX) values
+            (\'1\',:Id_Voluntario,\'SIM\',NOW(),NOW(),:old_id_aux)');
+            $deleteQuery = array('DELETE FROM cadvoluntarios WHERE id_aux = :old_id_aux');
             $this->dataset = new QueryDataset(
               MySqlIConnectionFactory::getInstance(), 
               GetConnectionOptions(),
