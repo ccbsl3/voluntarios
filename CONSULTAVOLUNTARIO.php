@@ -1129,7 +1129,8 @@
             //
             $editor = new MaskedEdit('tel1_voluntario_edit', '(99) 9999-9999');
             $editColumn = new CustomEditColumn('Telefone Fixo', 'tel1_voluntario', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
             
@@ -1138,7 +1139,8 @@
             //
             $editor = new MaskedEdit('tel2_voluntario_edit', '(99) 9 9999-9999');
             $editColumn = new CustomEditColumn('Telefone Móvel', 'tel2_voluntario', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
             
@@ -1336,7 +1338,8 @@
             //
             $editor = new MaskedEdit('tel1_voluntario_edit', '(99) 9999-9999');
             $editColumn = new CustomEditColumn('Telefone Fixo', 'tel1_voluntario', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
             
@@ -1345,7 +1348,8 @@
             //
             $editor = new MaskedEdit('tel2_voluntario_edit', '(99) 9 9999-9999');
             $editColumn = new CustomEditColumn('Telefone Móvel', 'tel2_voluntario', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
             
@@ -1543,7 +1547,8 @@
             //
             $editor = new MaskedEdit('tel1_voluntario_edit', '(99) 9999-9999');
             $editColumn = new CustomEditColumn('Telefone Fixo', 'tel1_voluntario', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
             
@@ -1552,7 +1557,8 @@
             //
             $editor = new MaskedEdit('tel2_voluntario_edit', '(99) 9 9999-9999');
             $editColumn = new CustomEditColumn('Telefone Móvel', 'tel2_voluntario', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
             
