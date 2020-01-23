@@ -43,19 +43,19 @@
             $selectQuery = 'select concat(replace(replace(v.id_voluntario,\'-\',\'\'),\'.\',\'\'),\' \',v.nm_voluntario) as descricao,v.id_voluntario id_voluntario,v.nm_voluntario nm_voluntario,
             c.ds_subsetor,v.id_ccb, v.id_aux,
             v.id_funcao1, v.id_funcao2, v.id_funcao3,v.dt_nasc_voluntario,v.tel1_voluntario,v.tel2_voluntario,v.tel3_voluntario,
-            v.foto_voluntario,v.thumb_voluntario,v.DT_ALTERACAO
-            from sl3.cadvoluntarios v
-            join sl3.cadcongregacoes c on v.id_ccb = c.id_ccb';
+            v.foto_voluntario,v.thumb_voluntario,v.DT_ALTERACAO,v.NM_COMUM_CCB,v.CD_RG_VOLUNTARIO
+            from cadvoluntarios v
+            join cadcongregacoes c on v.id_ccb = c.id_ccb';
             $insertQuery = array('insert into cadvoluntarios
             (id_voluntario,nm_voluntario,id_ccb,
             id_funcao1, id_funcao2, id_funcao3,dt_nasc_voluntario,tel1_voluntario,tel2_voluntario,tel3_voluntario,
-            foto_voluntario,thumb_voluntario,dt_alteracao) values
-            (:id_voluntario,:nm_voluntario,:id_ccb,
+            foto_voluntario,thumb_voluntario,dt_alteracao,NM_COMUM_CCB,CD_RG_VOLUNTARIO) values
+            (:id_voluntario,UPPER(:nm_voluntario),:id_ccb,
             :id_funcao1, :id_funcao2, :id_funcao3,:dt_nasc_voluntario,:tel1_voluntario,:tel2_voluntario,:tel3_voluntario,
-            :foto_voluntario,:thumb_voluntario,now())');
+            :foto_voluntario,:thumb_voluntario,now(),UPPER(:NM_COMUM_CCB),UPPER(:CD_RG_VOLUNTARIO))');
             $updateQuery = array('update cadvoluntarios
             set id_voluntario = :id_voluntario,
-            nm_voluntario = :nm_voluntario,
+            nm_voluntario = UPPER(:nm_voluntario),
             id_ccb = :id_ccb,
             id_funcao1 = :id_funcao1, 
             id_funcao2 = :id_funcao2, 
@@ -66,11 +66,10 @@
             tel3_voluntario = :tel3_voluntario,
             foto_voluntario = :foto_voluntario,
             thumb_voluntario = :thumb_voluntario,
-            dt_alteracao = now()
-            where id_aux = :old_id_aux', 
-            'INSERT INTO convocacoeseventos
-            (Id_Evento,Id_Voluntario,St_VoluntarioCompareceu,Dt_Hr_Chegada,Dt_Hr_Saida,ID_AUX) values
-            (\'1\',:Id_Voluntario,\'SIM\',NOW(),NOW(),:old_id_aux)');
+            dt_alteracao = now(),
+            NM_COMUM_CCB = UPPER(:NM_COMUM_CCB),
+            CD_RG_VOLUNTARIO = UPPER(:CD_RG_VOLUNTARIO)
+            where id_aux = :old_id_aux');
             $deleteQuery = array('DELETE FROM cadvoluntarios WHERE id_aux = :old_id_aux');
             $this->dataset = new QueryDataset(
               MySqlIConnectionFactory::getInstance(), 
@@ -93,7 +92,9 @@
                     new StringField('tel3_voluntario'),
                     new StringField('foto_voluntario'),
                     new StringField('thumb_voluntario'),
-                    new DateTimeField('DT_ALTERACAO')
+                    new DateTimeField('DT_ALTERACAO'),
+                    new StringField('NM_COMUM_CCB'),
+                    new StringField('CD_RG_VOLUNTARIO')
                 )
             );
             $this->dataset->AddLookupField('id_ccb', 'cadcongregacoes', new StringField('Id_CCB'), new StringField('Ds_CCB', false, false, false, false, 'id_ccb_Ds_CCB', 'id_ccb_Ds_CCB_cadcongregacoes'), 'id_ccb_Ds_CCB_cadcongregacoes');
@@ -130,11 +131,13 @@
         protected function getFiltersColumns()
         {
             return array(
-                new FilterColumn($this->dataset, 'descricao', 'descricao', 'Descricao'),
+                new FilterColumn($this->dataset, 'descricao', 'descricao', 'Descrição'),
                 new FilterColumn($this->dataset, 'id_voluntario', 'id_voluntario', 'CPF'),
+                new FilterColumn($this->dataset, 'CD_RG_VOLUNTARIO', 'CD_RG_VOLUNTARIO', 'RG'),
                 new FilterColumn($this->dataset, 'nm_voluntario', 'nm_voluntario', 'Nome'),
-                new FilterColumn($this->dataset, 'ds_subsetor', 'ds_subsetor', 'Subsetor'),
+                new FilterColumn($this->dataset, 'ds_subsetor', 'ds_subsetor', 'SubSetor'),
                 new FilterColumn($this->dataset, 'id_ccb', 'id_ccb_Ds_CCB', 'CCB'),
+                new FilterColumn($this->dataset, 'NM_COMUM_CCB', 'NM_COMUM_CCB', 'Comum CCB'),
                 new FilterColumn($this->dataset, 'id_aux', 'id_aux', 'Id Aux'),
                 new FilterColumn($this->dataset, 'id_funcao1', 'id_funcao1_Ds_Funcao', 'Função Principal'),
                 new FilterColumn($this->dataset, 'id_funcao2', 'id_funcao2_Ds_Funcao', 'Função Complementar'),
@@ -143,9 +146,9 @@
                 new FilterColumn($this->dataset, 'tel1_voluntario', 'tel1_voluntario', 'Telefone Fixo'),
                 new FilterColumn($this->dataset, 'tel2_voluntario', 'tel2_voluntario', 'Telefone Móvel'),
                 new FilterColumn($this->dataset, 'tel3_voluntario', 'tel3_voluntario', 'Telefone Adicional'),
-                new FilterColumn($this->dataset, 'foto_voluntario', 'foto_voluntario', 'Foto Voluntario'),
-                new FilterColumn($this->dataset, 'thumb_voluntario', 'thumb_voluntario', 'Thumb Voluntario'),
-                new FilterColumn($this->dataset, 'DT_ALTERACAO', 'DT_ALTERACAO', 'DT ALTERACAO')
+                new FilterColumn($this->dataset, 'foto_voluntario', 'foto_voluntario', 'Foto Voluntário'),
+                new FilterColumn($this->dataset, 'thumb_voluntario', 'thumb_voluntario', 'Foto'),
+                new FilterColumn($this->dataset, 'DT_ALTERACAO', 'DT_ALTERACAO', 'Data Alteração')
             );
         }
     
@@ -154,9 +157,11 @@
             $quickFilter
                 ->addColumn($columns['descricao'])
                 ->addColumn($columns['id_voluntario'])
+                ->addColumn($columns['CD_RG_VOLUNTARIO'])
                 ->addColumn($columns['nm_voluntario'])
                 ->addColumn($columns['ds_subsetor'])
                 ->addColumn($columns['id_ccb'])
+                ->addColumn($columns['NM_COMUM_CCB'])
                 ->addColumn($columns['id_aux'])
                 ->addColumn($columns['id_funcao1'])
                 ->addColumn($columns['id_funcao2'])
@@ -227,6 +232,30 @@
                     FilterConditionOperator::ENDS_WITH => $text_editor,
                     FilterConditionOperator::IS_LIKE => $text_editor,
                     FilterConditionOperator::IS_NOT_LIKE => $text_editor,
+                    FilterConditionOperator::IS_BLANK => null,
+                    FilterConditionOperator::IS_NOT_BLANK => null
+                )
+            );
+            
+            $main_editor = new TextEdit('cd_rg_voluntario_edit');
+            
+            $filterBuilder->addColumn(
+                $columns['CD_RG_VOLUNTARIO'],
+                array(
+                    FilterConditionOperator::EQUALS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_BETWEEN => $main_editor,
+                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
+                    FilterConditionOperator::CONTAINS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_CONTAIN => $main_editor,
+                    FilterConditionOperator::BEGINS_WITH => $main_editor,
+                    FilterConditionOperator::ENDS_WITH => $main_editor,
+                    FilterConditionOperator::IS_LIKE => $main_editor,
+                    FilterConditionOperator::IS_NOT_LIKE => $main_editor,
                     FilterConditionOperator::IS_BLANK => null,
                     FilterConditionOperator::IS_NOT_BLANK => null
                 )
@@ -310,6 +339,30 @@
                     FilterConditionOperator::IS_NOT_LIKE => $text_editor,
                     FilterConditionOperator::IN => $multi_value_select_editor,
                     FilterConditionOperator::NOT_IN => $multi_value_select_editor,
+                    FilterConditionOperator::IS_BLANK => null,
+                    FilterConditionOperator::IS_NOT_BLANK => null
+                )
+            );
+            
+            $main_editor = new TextEdit('nm_comum_ccb_edit');
+            
+            $filterBuilder->addColumn(
+                $columns['NM_COMUM_CCB'],
+                array(
+                    FilterConditionOperator::EQUALS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_BETWEEN => $main_editor,
+                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
+                    FilterConditionOperator::CONTAINS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_CONTAIN => $main_editor,
+                    FilterConditionOperator::BEGINS_WITH => $main_editor,
+                    FilterConditionOperator::ENDS_WITH => $main_editor,
+                    FilterConditionOperator::IS_LIKE => $main_editor,
+                    FilterConditionOperator::IS_NOT_LIKE => $main_editor,
                     FilterConditionOperator::IS_BLANK => null,
                     FilterConditionOperator::IS_NOT_BLANK => null
                 )
@@ -609,6 +662,16 @@
                 $operation->OnShow->AddListener('ShowEditButtonHandler', $this);
             }
             
+            if ($this->GetSecurityInfo()->HasDeleteGrant())
+            {
+                $operation = new LinkOperation($this->GetLocalizerCaptions()->GetMessageString('Delete'), OPERATION_DELETE, $this->dataset, $grid);
+                $operation->setUseImage(true);
+                $actions->addOperation($operation);
+                $operation->OnShow->AddListener('ShowDeleteButtonHandler', $this);
+                $operation->SetAdditionalAttribute('data-modal-operation', 'delete');
+                $operation->SetAdditionalAttribute('data-delete-handler-name', $this->GetModalGridDeleteHandler());
+            }
+            
             if ($this->GetSecurityInfo()->HasAddGrant())
             {
                 $operation = new LinkOperation($this->GetLocalizerCaptions()->GetMessageString('Copy'), OPERATION_COPY, $this->dataset, $grid);
@@ -622,7 +685,7 @@
             //
             // View column for descricao field
             //
-            $column = new TextViewColumn('descricao', 'descricao', 'Descricao', $this->dataset);
+            $column = new TextViewColumn('descricao', 'descricao', 'Descrição', $this->dataset);
             $column->SetOrderable(true);
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
@@ -633,6 +696,16 @@
             // View column for id_voluntario field
             //
             $column = new TextViewColumn('id_voluntario', 'id_voluntario', 'CPF', $this->dataset);
+            $column->SetOrderable(true);
+            $column->setMinimalVisibility(ColumnVisibility::PHONE);
+            $column->SetDescription('');
+            $column->SetFixedWidth(null);
+            $grid->AddViewColumn($column);
+            
+            //
+            // View column for CD_RG_VOLUNTARIO field
+            //
+            $column = new TextViewColumn('CD_RG_VOLUNTARIO', 'CD_RG_VOLUNTARIO', 'RG', $this->dataset);
             $column->SetOrderable(true);
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
@@ -652,7 +725,7 @@
             //
             // View column for ds_subsetor field
             //
-            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'Subsetor', $this->dataset);
+            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
@@ -670,13 +743,10 @@
             $grid->AddViewColumn($column);
             
             //
-            // View column for id_aux field
+            // View column for NM_COMUM_CCB field
             //
-            $column = new NumberViewColumn('id_aux', 'id_aux', 'Id Aux', $this->dataset);
+            $column = new TextViewColumn('NM_COMUM_CCB', 'NM_COMUM_CCB', 'Comum CCB', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
             $column->SetFixedWidth(null);
@@ -755,7 +825,7 @@
             //
             // View column for thumb_voluntario field
             //
-            $column = new ExternalImageViewColumn('thumb_voluntario', 'thumb_voluntario', 'Thumb Voluntario', $this->dataset);
+            $column = new ExternalImageViewColumn('thumb_voluntario', 'thumb_voluntario', 'Foto', $this->dataset);
             $column->SetOrderable(true);
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
@@ -765,7 +835,7 @@
             //
             // View column for DT_ALTERACAO field
             //
-            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'DT ALTERACAO', $this->dataset);
+            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'Data Alteração', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
@@ -779,7 +849,7 @@
             //
             // View column for descricao field
             //
-            $column = new TextViewColumn('descricao', 'descricao', 'Descricao', $this->dataset);
+            $column = new TextViewColumn('descricao', 'descricao', 'Descrição', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
@@ -787,6 +857,13 @@
             // View column for id_voluntario field
             //
             $column = new TextViewColumn('id_voluntario', 'id_voluntario', 'CPF', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddSingleRecordViewColumn($column);
+            
+            //
+            // View column for CD_RG_VOLUNTARIO field
+            //
+            $column = new TextViewColumn('CD_RG_VOLUNTARIO', 'CD_RG_VOLUNTARIO', 'RG', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
@@ -800,7 +877,7 @@
             //
             // View column for ds_subsetor field
             //
-            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'Subsetor', $this->dataset);
+            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
@@ -812,13 +889,10 @@
             $grid->AddSingleRecordViewColumn($column);
             
             //
-            // View column for id_aux field
+            // View column for NM_COMUM_CCB field
             //
-            $column = new NumberViewColumn('id_aux', 'id_aux', 'Id Aux', $this->dataset);
+            $column = new TextViewColumn('NM_COMUM_CCB', 'NM_COMUM_CCB', 'Comum CCB', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddSingleRecordViewColumn($column);
             
             //
@@ -873,14 +947,14 @@
             //
             // View column for foto_voluntario field
             //
-            $column = new TextViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntario', $this->dataset);
+            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntário', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
             //
             // View column for DT_ALTERACAO field
             //
-            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'DT ALTERACAO', $this->dataset);
+            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'Data Alteração', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddSingleRecordViewColumn($column);
@@ -895,8 +969,15 @@
             $editColumn = new CustomEditColumn('CPF', 'id_voluntario', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
-            $validator = new CustomRegExpValidator('[0-9]{3}\.?[0-9]{3}\.?[0-9]{3}\-?[0-9]{2}', StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RegExpValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddEditColumn($editColumn);
+            
+            //
+            // Edit column for CD_RG_VOLUNTARIO field
+            //
+            $editor = new TextEdit('cd_rg_voluntario_edit');
+            $editColumn = new CustomEditColumn('RG', 'CD_RG_VOLUNTARIO', $editor, $this->dataset);
+            $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
             
@@ -905,16 +986,6 @@
             //
             $editor = new TextEdit('nm_voluntario_edit');
             $editColumn = new CustomEditColumn('Nome', 'nm_voluntario', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddEditColumn($editColumn);
-            
-            //
-            // Edit column for ds_subsetor field
-            //
-            $editor = new TextEdit('ds_subsetor_edit');
-            $editColumn = new CustomEditColumn('Subsetor', 'ds_subsetor', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -957,6 +1028,15 @@
             $editColumn = new DynamicLookupEditColumn('CCB', 'id_ccb', 'id_ccb_Ds_CCB', 'edit_CONSULTAVOLUNTARIO_id_ccb_search', $editor, $this->dataset, $lookupDataset, 'Id_CCB', 'Ds_CCB', '');
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddEditColumn($editColumn);
+            
+            //
+            // Edit column for NM_COMUM_CCB field
+            //
+            $editor = new TextEdit('nm_comum_ccb_edit');
+            $editColumn = new CustomEditColumn('Comum CCB', 'NM_COMUM_CCB', $editor, $this->dataset);
+            $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
             
@@ -1073,7 +1153,7 @@
             $editor = new ImageUploader('foto_voluntario_edit');
             $editor->SetShowImage(true);
             $editor->setAcceptableFileTypes('image/*');
-            $editColumn = new UploadFileToFolderColumn('Foto Voluntario', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
+            $editColumn = new UploadFileToFolderColumn('Foto Voluntário', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
             $editColumn->SetReplaceUploadedFileIfExist(true);
             $editColumn->SetGenerationImageThumbnails(
                 'thumb_voluntario',
@@ -1082,6 +1162,15 @@
                 new ImageFitByHeightResizeFilter(30),
                 false
             );
+            $editColumn->SetAllowSetToNull(true);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddEditColumn($editColumn);
+            
+            //
+            // Edit column for DT_ALTERACAO field
+            //
+            $editor = new DateTimeEdit('dt_alteracao_edit', false, 'Y-m-d H:i:s');
+            $editColumn = new CustomEditColumn('Data Alteração', 'DT_ALTERACAO', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
@@ -1096,8 +1185,15 @@
             $editColumn = new CustomEditColumn('CPF', 'id_voluntario', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
-            $validator = new CustomRegExpValidator('[0-9]{3}\.?[0-9]{3}\.?[0-9]{3}\-?[0-9]{2}', StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RegExpValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddMultiEditColumn($editColumn);
+            
+            //
+            // Edit column for CD_RG_VOLUNTARIO field
+            //
+            $editor = new TextEdit('cd_rg_voluntario_edit');
+            $editColumn = new CustomEditColumn('RG', 'CD_RG_VOLUNTARIO', $editor, $this->dataset);
+            $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
             
@@ -1106,16 +1202,6 @@
             //
             $editor = new TextEdit('nm_voluntario_edit');
             $editColumn = new CustomEditColumn('Nome', 'nm_voluntario', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddMultiEditColumn($editColumn);
-            
-            //
-            // Edit column for ds_subsetor field
-            //
-            $editor = new TextEdit('ds_subsetor_edit');
-            $editColumn = new CustomEditColumn('Subsetor', 'ds_subsetor', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -1158,6 +1244,15 @@
             $editColumn = new DynamicLookupEditColumn('CCB', 'id_ccb', 'id_ccb_Ds_CCB', 'multi_edit_CONSULTAVOLUNTARIO_id_ccb_search', $editor, $this->dataset, $lookupDataset, 'Id_CCB', 'Ds_CCB', '');
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddMultiEditColumn($editColumn);
+            
+            //
+            // Edit column for NM_COMUM_CCB field
+            //
+            $editor = new TextEdit('nm_comum_ccb_edit');
+            $editColumn = new CustomEditColumn('Comum CCB', 'NM_COMUM_CCB', $editor, $this->dataset);
+            $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
             
@@ -1274,7 +1369,7 @@
             $editor = new ImageUploader('foto_voluntario_edit');
             $editor->SetShowImage(true);
             $editor->setAcceptableFileTypes('image/*');
-            $editColumn = new UploadFileToFolderColumn('Foto Voluntario', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
+            $editColumn = new UploadFileToFolderColumn('Foto Voluntário', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
             $editColumn->SetReplaceUploadedFileIfExist(true);
             $editColumn->SetGenerationImageThumbnails(
                 'thumb_voluntario',
@@ -1283,6 +1378,15 @@
                 new ImageFitByHeightResizeFilter(30),
                 false
             );
+            $editColumn->SetAllowSetToNull(true);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddMultiEditColumn($editColumn);
+            
+            //
+            // Edit column for DT_ALTERACAO field
+            //
+            $editor = new DateTimeEdit('dt_alteracao_edit', false, 'Y-m-d H:i:s');
+            $editColumn = new CustomEditColumn('Data Alteração', 'DT_ALTERACAO', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
@@ -1297,8 +1401,15 @@
             $editColumn = new CustomEditColumn('CPF', 'id_voluntario', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
-            $validator = new CustomRegExpValidator('[0-9]{3}\.?[0-9]{3}\.?[0-9]{3}\-?[0-9]{2}', StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RegExpValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddInsertColumn($editColumn);
+            
+            //
+            // Edit column for CD_RG_VOLUNTARIO field
+            //
+            $editor = new TextEdit('cd_rg_voluntario_edit');
+            $editColumn = new CustomEditColumn('RG', 'CD_RG_VOLUNTARIO', $editor, $this->dataset);
+            $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
             
@@ -1307,16 +1418,6 @@
             //
             $editor = new TextEdit('nm_voluntario_edit');
             $editColumn = new CustomEditColumn('Nome', 'nm_voluntario', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
-            // Edit column for ds_subsetor field
-            //
-            $editor = new TextEdit('ds_subsetor_edit');
-            $editColumn = new CustomEditColumn('Subsetor', 'ds_subsetor', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -1359,6 +1460,15 @@
             $editColumn = new DynamicLookupEditColumn('CCB', 'id_ccb', 'id_ccb_Ds_CCB', 'insert_CONSULTAVOLUNTARIO_id_ccb_search', $editor, $this->dataset, $lookupDataset, 'Id_CCB', 'Ds_CCB', '');
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddInsertColumn($editColumn);
+            
+            //
+            // Edit column for NM_COMUM_CCB field
+            //
+            $editor = new TextEdit('nm_comum_ccb_edit');
+            $editColumn = new CustomEditColumn('Comum CCB', 'NM_COMUM_CCB', $editor, $this->dataset);
+            $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
             
@@ -1475,7 +1585,7 @@
             $editor = new ImageUploader('foto_voluntario_edit');
             $editor->SetShowImage(true);
             $editor->setAcceptableFileTypes('image/*');
-            $editColumn = new UploadFileToFolderColumn('Foto Voluntario', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
+            $editColumn = new UploadFileToFolderColumn('Foto Voluntário', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
             $editColumn->SetReplaceUploadedFileIfExist(true);
             $editColumn->SetGenerationImageThumbnails(
                 'thumb_voluntario',
@@ -1484,6 +1594,15 @@
                 new ImageFitByHeightResizeFilter(30),
                 false
             );
+            $editColumn->SetAllowSetToNull(true);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddInsertColumn($editColumn);
+            
+            //
+            // Edit column for DT_ALTERACAO field
+            //
+            $editor = new DateTimeEdit('dt_alteracao_edit', false, 'Y-m-d H:i:s');
+            $editColumn = new CustomEditColumn('Data Alteração', 'DT_ALTERACAO', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
@@ -1500,7 +1619,7 @@
             //
             // View column for descricao field
             //
-            $column = new TextViewColumn('descricao', 'descricao', 'Descricao', $this->dataset);
+            $column = new TextViewColumn('descricao', 'descricao', 'Descrição', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
@@ -1508,6 +1627,13 @@
             // View column for id_voluntario field
             //
             $column = new TextViewColumn('id_voluntario', 'id_voluntario', 'CPF', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddPrintColumn($column);
+            
+            //
+            // View column for CD_RG_VOLUNTARIO field
+            //
+            $column = new TextViewColumn('CD_RG_VOLUNTARIO', 'CD_RG_VOLUNTARIO', 'RG', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
@@ -1521,7 +1647,7 @@
             //
             // View column for ds_subsetor field
             //
-            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'Subsetor', $this->dataset);
+            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
@@ -1529,6 +1655,13 @@
             // View column for Ds_CCB field
             //
             $column = new TextViewColumn('id_ccb', 'id_ccb_Ds_CCB', 'CCB', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddPrintColumn($column);
+            
+            //
+            // View column for NM_COMUM_CCB field
+            //
+            $column = new TextViewColumn('NM_COMUM_CCB', 'NM_COMUM_CCB', 'Comum CCB', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
@@ -1594,21 +1727,21 @@
             //
             // View column for foto_voluntario field
             //
-            $column = new TextViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntario', $this->dataset);
+            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntário', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
             //
             // View column for thumb_voluntario field
             //
-            $column = new ExternalImageViewColumn('thumb_voluntario', 'thumb_voluntario', 'Thumb Voluntario', $this->dataset);
+            $column = new ExternalImageViewColumn('thumb_voluntario', 'thumb_voluntario', 'Foto', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
             //
             // View column for DT_ALTERACAO field
             //
-            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'DT ALTERACAO', $this->dataset);
+            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'Data Alteração', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddPrintColumn($column);
@@ -1619,7 +1752,7 @@
             //
             // View column for descricao field
             //
-            $column = new TextViewColumn('descricao', 'descricao', 'Descricao', $this->dataset);
+            $column = new TextViewColumn('descricao', 'descricao', 'Descrição', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
@@ -1627,6 +1760,13 @@
             // View column for id_voluntario field
             //
             $column = new TextViewColumn('id_voluntario', 'id_voluntario', 'CPF', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddExportColumn($column);
+            
+            //
+            // View column for CD_RG_VOLUNTARIO field
+            //
+            $column = new TextViewColumn('CD_RG_VOLUNTARIO', 'CD_RG_VOLUNTARIO', 'RG', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
@@ -1640,7 +1780,7 @@
             //
             // View column for ds_subsetor field
             //
-            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'Subsetor', $this->dataset);
+            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
@@ -1648,6 +1788,13 @@
             // View column for Ds_CCB field
             //
             $column = new TextViewColumn('id_ccb', 'id_ccb_Ds_CCB', 'CCB', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddExportColumn($column);
+            
+            //
+            // View column for NM_COMUM_CCB field
+            //
+            $column = new TextViewColumn('NM_COMUM_CCB', 'NM_COMUM_CCB', 'Comum CCB', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
@@ -1713,21 +1860,21 @@
             //
             // View column for foto_voluntario field
             //
-            $column = new TextViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntario', $this->dataset);
+            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntário', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
             //
             // View column for thumb_voluntario field
             //
-            $column = new ExternalImageViewColumn('thumb_voluntario', 'thumb_voluntario', 'Thumb Voluntario', $this->dataset);
+            $column = new ExternalImageViewColumn('thumb_voluntario', 'thumb_voluntario', 'Foto', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
             //
             // View column for DT_ALTERACAO field
             //
-            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'DT ALTERACAO', $this->dataset);
+            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'Data Alteração', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddExportColumn($column);
@@ -1738,7 +1885,7 @@
             //
             // View column for descricao field
             //
-            $column = new TextViewColumn('descricao', 'descricao', 'Descricao', $this->dataset);
+            $column = new TextViewColumn('descricao', 'descricao', 'Descrição', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
@@ -1746,6 +1893,13 @@
             // View column for id_voluntario field
             //
             $column = new TextViewColumn('id_voluntario', 'id_voluntario', 'CPF', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddCompareColumn($column);
+            
+            //
+            // View column for CD_RG_VOLUNTARIO field
+            //
+            $column = new TextViewColumn('CD_RG_VOLUNTARIO', 'CD_RG_VOLUNTARIO', 'RG', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
@@ -1759,7 +1913,7 @@
             //
             // View column for ds_subsetor field
             //
-            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'Subsetor', $this->dataset);
+            $column = new TextViewColumn('ds_subsetor', 'ds_subsetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
@@ -1767,6 +1921,13 @@
             // View column for Ds_CCB field
             //
             $column = new TextViewColumn('id_ccb', 'id_ccb_Ds_CCB', 'CCB', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddCompareColumn($column);
+            
+            //
+            // View column for NM_COMUM_CCB field
+            //
+            $column = new TextViewColumn('NM_COMUM_CCB', 'NM_COMUM_CCB', 'Comum CCB', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
@@ -1822,21 +1983,21 @@
             //
             // View column for foto_voluntario field
             //
-            $column = new TextViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntario', $this->dataset);
+            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntário', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
             //
             // View column for thumb_voluntario field
             //
-            $column = new ExternalImageViewColumn('thumb_voluntario', 'thumb_voluntario', 'Thumb Voluntario', $this->dataset);
+            $column = new ExternalImageViewColumn('thumb_voluntario', 'thumb_voluntario', 'Foto', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
             //
             // View column for DT_ALTERACAO field
             //
-            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'DT ALTERACAO', $this->dataset);
+            $column = new DateTimeViewColumn('DT_ALTERACAO', 'DT_ALTERACAO', 'Data Alteração', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddCompareColumn($column);
@@ -1922,12 +2083,14 @@
         
         $handled = true;
         }
+        
+        protected function GetEnableModalGridDelete() { return true; }
     
         protected function CreateGrid()
         {
             $result = new Grid($this, $this->dataset);
             if ($this->GetSecurityInfo()->HasDeleteGrant())
-               $result->SetAllowDeleteSelected(false);
+               $result->SetAllowDeleteSelected(true);
             else
                $result->SetAllowDeleteSelected(false);   
             

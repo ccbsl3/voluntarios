@@ -56,7 +56,7 @@
             $insertQuery = array('INSERT INTO convocacoeseventosministerio 
             (Id_irmaoministerio,Id_Evento,Dt_Hr_Chegada,NomeCompleto,Ministerio,Telefone,
             SubSetor,ComumCongregacao,Id_Estado,Id_Cidade) VALUES 
-            (:Id_irmaoministerio,:Id_Evento,NOW(),UPPER(:NomeCompleto),:Ministerio,:Telefone,
+            (:Id_irmaoministerio,\'1\',NOW(),UPPER(:NomeCompleto),:Ministerio,:Telefone,
             UPPER(:SubSetor),UPPER(:ComumCongregacao),:Id_Estado,:Id_Cidade)');
             $updateQuery = array('UPDATE convocacoeseventosministerio 
             SET Id_irmaoministerio = :Id_irmaoministerio,
@@ -91,6 +91,8 @@
             );
             $this->dataset->AddLookupField('Id_irmaoministerio', 'cadministerio', new IntegerField('Id_irmaoministerio'), new StringField('NomeCompleto', false, false, false, false, 'Id_irmaoministerio_NomeCompleto', 'Id_irmaoministerio_NomeCompleto_cadministerio'), 'Id_irmaoministerio_NomeCompleto_cadministerio');
             $this->dataset->AddLookupField('Id_Evento', 'eventos', new IntegerField('id_Evento'), new StringField('Ds_Evento', false, false, false, false, 'Id_Evento_Ds_Evento', 'Id_Evento_Ds_Evento_eventos'), 'Id_Evento_Ds_Evento_eventos');
+            $this->dataset->AddLookupField('Id_Estado', 'estado', new IntegerField('id'), new StringField('nome', false, false, false, false, 'Id_Estado_nome', 'Id_Estado_nome_estado'), 'Id_Estado_nome_estado');
+            $this->dataset->AddLookupField('Id_Cidade', 'cidade', new IntegerField('id'), new StringField('nome', false, false, false, false, 'Id_Cidade_nome', 'Id_Cidade_nome_cidade'), 'Id_Cidade_nome_cidade');
         }
     
         protected function DoPrepare() {
@@ -124,14 +126,14 @@
                 new FilterColumn($this->dataset, 'Id_irmaoministerio', 'Id_irmaoministerio_NomeCompleto', 'Irmão Ministério'),
                 new FilterColumn($this->dataset, 'Id_Convocacao_Ministerio', 'Id_Convocacao_Ministerio', 'Id Convocacao Ministerio'),
                 new FilterColumn($this->dataset, 'Id_Evento', 'Id_Evento_Ds_Evento', 'Evento'),
-                new FilterColumn($this->dataset, 'Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Dt Hr Chegada'),
+                new FilterColumn($this->dataset, 'Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada'),
                 new FilterColumn($this->dataset, 'NomeCompleto', 'NomeCompleto', 'Nome Completo'),
                 new FilterColumn($this->dataset, 'Ministerio', 'Ministerio', 'Ministerio'),
                 new FilterColumn($this->dataset, 'Telefone', 'Telefone', 'Telefone'),
-                new FilterColumn($this->dataset, 'SubSetor', 'SubSetor', 'Sub Setor'),
+                new FilterColumn($this->dataset, 'SubSetor', 'SubSetor', 'SubSetor'),
                 new FilterColumn($this->dataset, 'ComumCongregacao', 'ComumCongregacao', 'Comum Congregacao'),
-                new FilterColumn($this->dataset, 'Id_Estado', 'Id_Estado', 'Id Estado'),
-                new FilterColumn($this->dataset, 'Id_Cidade', 'Id_Cidade', 'Id Cidade')
+                new FilterColumn($this->dataset, 'Id_Estado', 'Id_Estado_nome', 'Estado'),
+                new FilterColumn($this->dataset, 'Id_Cidade', 'Id_Cidade_nome', 'Cidade')
             );
         }
     
@@ -154,9 +156,10 @@
         protected function setupColumnFilter(ColumnFilter $columnFilter)
         {
             $columnFilter
-                ->setOptionsFor('Id_irmaoministerio')
                 ->setOptionsFor('Id_Evento')
-                ->setOptionsFor('Dt_Hr_Chegada');
+                ->setOptionsFor('Dt_Hr_Chegada')
+                ->setOptionsFor('Id_Estado')
+                ->setOptionsFor('Id_Cidade');
         }
     
         protected function setupFilterBuilder(FilterBuilder $filterBuilder, FixedKeysArray $columns)
@@ -350,7 +353,19 @@
                 )
             );
             
-            $main_editor = new TextEdit('subsetor_edit');
+            $main_editor = new ComboBox('subsetor_edit', $this->GetLocalizerCaptions()->GetMessageString('PleaseSelect'));
+            $main_editor->addChoice('GUAIANAZES', 'GUAIANAZES');
+            $main_editor->addChoice('ITAQUERA', 'ITAQUERA');
+            $main_editor->addChoice('SALETE', 'SALETE');
+            $main_editor->addChoice('SAO MIGUEL', 'SAO MIGUEL');
+            $main_editor->addChoice('TIRADENTES', 'TIRADENTES');
+            $main_editor->addChoice('OUTROS', 'OUTROS');
+            $main_editor->SetAllowNullValue(false);
+            
+            $multi_value_select_editor = new MultiValueSelect('SubSetor');
+            $multi_value_select_editor->setChoices($main_editor->getChoices());
+            
+            $text_editor = new TextEdit('SubSetor');
             
             $filterBuilder->addColumn(
                 $columns['SubSetor'],
@@ -363,12 +378,14 @@
                     FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
                     FilterConditionOperator::IS_BETWEEN => $main_editor,
                     FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
-                    FilterConditionOperator::CONTAINS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_CONTAIN => $main_editor,
-                    FilterConditionOperator::BEGINS_WITH => $main_editor,
-                    FilterConditionOperator::ENDS_WITH => $main_editor,
-                    FilterConditionOperator::IS_LIKE => $main_editor,
-                    FilterConditionOperator::IS_NOT_LIKE => $main_editor,
+                    FilterConditionOperator::CONTAINS => $text_editor,
+                    FilterConditionOperator::DOES_NOT_CONTAIN => $text_editor,
+                    FilterConditionOperator::BEGINS_WITH => $text_editor,
+                    FilterConditionOperator::ENDS_WITH => $text_editor,
+                    FilterConditionOperator::IS_LIKE => $text_editor,
+                    FilterConditionOperator::IS_NOT_LIKE => $text_editor,
+                    FilterConditionOperator::IN => $multi_value_select_editor,
+                    FilterConditionOperator::NOT_IN => $multi_value_select_editor,
                     FilterConditionOperator::IS_BLANK => null,
                     FilterConditionOperator::IS_NOT_BLANK => null
                 )
@@ -398,7 +415,14 @@
                 )
             );
             
-            $main_editor = new SpinEdit('id_estado_edit');
+            $main_editor = new DynamicCombobox('id_estado_edit', $this->CreateLinkBuilder());
+            $main_editor->setAllowClear(true);
+            $main_editor->setMinimumInputLength(0);
+            $main_editor->SetAllowNullValue(false);
+            $main_editor->SetHandlerName('filter_builder_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search');
+            
+            $multi_value_select_editor = new RemoteMultiValueSelect('Id_Estado', $this->CreateLinkBuilder());
+            $multi_value_select_editor->SetHandlerName('filter_builder_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search');
             
             $filterBuilder->addColumn(
                 $columns['Id_Estado'],
@@ -411,12 +435,21 @@
                     FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
                     FilterConditionOperator::IS_BETWEEN => $main_editor,
                     FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
+                    FilterConditionOperator::IN => $multi_value_select_editor,
+                    FilterConditionOperator::NOT_IN => $multi_value_select_editor,
                     FilterConditionOperator::IS_BLANK => null,
                     FilterConditionOperator::IS_NOT_BLANK => null
                 )
             );
             
-            $main_editor = new SpinEdit('id_cidade_edit');
+            $main_editor = new DynamicCombobox('id_cidade_edit', $this->CreateLinkBuilder());
+            $main_editor->setAllowClear(true);
+            $main_editor->setMinimumInputLength(0);
+            $main_editor->SetAllowNullValue(false);
+            $main_editor->SetHandlerName('filter_builder_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search');
+            
+            $multi_value_select_editor = new RemoteMultiValueSelect('Id_Cidade', $this->CreateLinkBuilder());
+            $multi_value_select_editor->SetHandlerName('filter_builder_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search');
             
             $filterBuilder->addColumn(
                 $columns['Id_Cidade'],
@@ -429,6 +462,8 @@
                     FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
                     FilterConditionOperator::IS_BETWEEN => $main_editor,
                     FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
+                    FilterConditionOperator::IN => $multi_value_select_editor,
+                    FilterConditionOperator::NOT_IN => $multi_value_select_editor,
                     FilterConditionOperator::IS_BLANK => null,
                     FilterConditionOperator::IS_NOT_BLANK => null
                 )
@@ -477,29 +512,6 @@
         protected function AddFieldColumns(Grid $grid, $withDetails = true)
         {
             //
-            // View column for NomeCompleto field
-            //
-            $column = new TextViewColumn('Id_irmaoministerio', 'Id_irmaoministerio_NomeCompleto', 'Irmão Ministério', $this->dataset);
-            $column->SetOrderable(true);
-            $column->setMinimalVisibility(ColumnVisibility::PHONE);
-            $column->SetDescription('');
-            $column->SetFixedWidth(null);
-            $grid->AddViewColumn($column);
-            
-            //
-            // View column for Id_Convocacao_Ministerio field
-            //
-            $column = new NumberViewColumn('Id_Convocacao_Ministerio', 'Id_Convocacao_Ministerio', 'Id Convocacao Ministerio', $this->dataset);
-            $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
-            $column->setMinimalVisibility(ColumnVisibility::PHONE);
-            $column->SetDescription('');
-            $column->SetFixedWidth(null);
-            $grid->AddViewColumn($column);
-            
-            //
             // View column for Ds_Evento field
             //
             $column = new TextViewColumn('Id_Evento', 'Id_Evento_Ds_Evento', 'Evento', $this->dataset);
@@ -512,7 +524,7 @@
             //
             // View column for Dt_Hr_Chegada field
             //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Dt Hr Chegada', $this->dataset);
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
@@ -553,7 +565,7 @@
             //
             // View column for SubSetor field
             //
-            $column = new TextViewColumn('SubSetor', 'SubSetor', 'Sub Setor', $this->dataset);
+            $column = new TextViewColumn('SubSetor', 'SubSetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
@@ -571,26 +583,20 @@
             $grid->AddViewColumn($column);
             
             //
-            // View column for Id_Estado field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Estado', 'Id_Estado', 'Id Estado', $this->dataset);
+            $column = new TextViewColumn('Id_Estado', 'Id_Estado_nome', 'Estado', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
             $column->SetFixedWidth(null);
             $grid->AddViewColumn($column);
             
             //
-            // View column for Id_Cidade field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Cidade', 'Id_Cidade', 'Id Cidade', $this->dataset);
+            $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
             $column->SetFixedWidth(null);
@@ -600,23 +606,6 @@
         protected function AddSingleRecordViewColumns(Grid $grid)
         {
             //
-            // View column for NomeCompleto field
-            //
-            $column = new TextViewColumn('Id_irmaoministerio', 'Id_irmaoministerio_NomeCompleto', 'Irmão Ministério', $this->dataset);
-            $column->SetOrderable(true);
-            $grid->AddSingleRecordViewColumn($column);
-            
-            //
-            // View column for Id_Convocacao_Ministerio field
-            //
-            $column = new NumberViewColumn('Id_Convocacao_Ministerio', 'Id_Convocacao_Ministerio', 'Id Convocacao Ministerio', $this->dataset);
-            $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
-            $grid->AddSingleRecordViewColumn($column);
-            
-            //
             // View column for Ds_Evento field
             //
             $column = new TextViewColumn('Id_Evento', 'Id_Evento_Ds_Evento', 'Evento', $this->dataset);
@@ -626,7 +615,7 @@
             //
             // View column for Dt_Hr_Chegada field
             //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Dt Hr Chegada', $this->dataset);
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddSingleRecordViewColumn($column);
@@ -655,7 +644,7 @@
             //
             // View column for SubSetor field
             //
-            $column = new TextViewColumn('SubSetor', 'SubSetor', 'Sub Setor', $this->dataset);
+            $column = new TextViewColumn('SubSetor', 'SubSetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
@@ -667,23 +656,17 @@
             $grid->AddSingleRecordViewColumn($column);
             
             //
-            // View column for Id_Estado field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Estado', 'Id_Estado', 'Id Estado', $this->dataset);
+            $column = new TextViewColumn('Id_Estado', 'Id_Estado_nome', 'Estado', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddSingleRecordViewColumn($column);
             
             //
-            // View column for Id_Cidade field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Cidade', 'Id_Cidade', 'Id Cidade', $this->dataset);
+            $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddSingleRecordViewColumn($column);
         }
     
@@ -719,15 +702,6 @@
             $grid->AddEditColumn($editColumn);
             
             //
-            // Edit column for Id_Convocacao_Ministerio field
-            //
-            $editor = new SpinEdit('id_convocacao_ministerio_edit');
-            $editColumn = new CustomEditColumn('Id Convocacao Ministerio', 'Id_Convocacao_Ministerio', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddEditColumn($editColumn);
-            
-            //
             // Edit column for Id_Evento field
             //
             $editor = new DynamicCombobox('id_evento_edit', $this->CreateLinkBuilder());
@@ -753,15 +727,6 @@
             $editColumn = new DynamicLookupEditColumn('Evento', 'Id_Evento', 'Id_Evento_Ds_Evento', 'edit_CHECKIN_EVENTO_MINISTERIO_Id_Evento_search', $editor, $this->dataset, $lookupDataset, 'id_Evento', 'Ds_Evento', '');
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddEditColumn($editColumn);
-            
-            //
-            // Edit column for Dt_Hr_Chegada field
-            //
-            $editor = new DateTimeEdit('dt_hr_chegada_edit', false, 'Y-m-d H:i:s');
-            $editColumn = new CustomEditColumn('Dt Hr Chegada', 'Dt_Hr_Chegada', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
             
@@ -803,8 +768,14 @@
             //
             // Edit column for SubSetor field
             //
-            $editor = new TextEdit('subsetor_edit');
-            $editColumn = new CustomEditColumn('Sub Setor', 'SubSetor', $editor, $this->dataset);
+            $editor = new ComboBox('subsetor_edit', $this->GetLocalizerCaptions()->GetMessageString('PleaseSelect'));
+            $editor->addChoice('GUAIANAZES', 'GUAIANAZES');
+            $editor->addChoice('ITAQUERA', 'ITAQUERA');
+            $editor->addChoice('SALETE', 'SALETE');
+            $editor->addChoice('SAO MIGUEL', 'SAO MIGUEL');
+            $editor->addChoice('TIRADENTES', 'TIRADENTES');
+            $editor->addChoice('OUTROS', 'OUTROS');
+            $editColumn = new CustomEditColumn('SubSetor', 'SubSetor', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
@@ -821,8 +792,22 @@
             //
             // Edit column for Id_Estado field
             //
-            $editor = new SpinEdit('id_estado_edit');
-            $editColumn = new CustomEditColumn('Id Estado', 'Id_Estado', $editor, $this->dataset);
+            $editor = new DynamicCombobox('id_estado_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`estado`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new StringField('uf')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Estado', 'Id_Estado', 'Id_Estado_nome', 'edit_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search', $editor, $this->dataset, $lookupDataset, 'id', 'nome', '');
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
@@ -830,8 +815,22 @@
             //
             // Edit column for Id_Cidade field
             //
-            $editor = new SpinEdit('id_cidade_edit');
-            $editColumn = new CustomEditColumn('Id Cidade', 'Id_Cidade', $editor, $this->dataset);
+            $editor = new DynamicCombobox('id_cidade_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`cidade`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new IntegerField('estado')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Cidade', 'Id_Cidade', 'Id_Cidade_nome', 'edit_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search', $editor, $this->dataset, $lookupDataset, 'id', 'nome', '');
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
@@ -869,15 +868,6 @@
             $grid->AddMultiEditColumn($editColumn);
             
             //
-            // Edit column for Id_Convocacao_Ministerio field
-            //
-            $editor = new SpinEdit('id_convocacao_ministerio_edit');
-            $editColumn = new CustomEditColumn('Id Convocacao Ministerio', 'Id_Convocacao_Ministerio', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddMultiEditColumn($editColumn);
-            
-            //
             // Edit column for Id_Evento field
             //
             $editor = new DynamicCombobox('id_evento_edit', $this->CreateLinkBuilder());
@@ -903,15 +893,6 @@
             $editColumn = new DynamicLookupEditColumn('Evento', 'Id_Evento', 'Id_Evento_Ds_Evento', 'multi_edit_CHECKIN_EVENTO_MINISTERIO_Id_Evento_search', $editor, $this->dataset, $lookupDataset, 'id_Evento', 'Ds_Evento', '');
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddMultiEditColumn($editColumn);
-            
-            //
-            // Edit column for Dt_Hr_Chegada field
-            //
-            $editor = new DateTimeEdit('dt_hr_chegada_edit', false, 'Y-m-d H:i:s');
-            $editColumn = new CustomEditColumn('Dt Hr Chegada', 'Dt_Hr_Chegada', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
             
@@ -953,8 +934,14 @@
             //
             // Edit column for SubSetor field
             //
-            $editor = new TextEdit('subsetor_edit');
-            $editColumn = new CustomEditColumn('Sub Setor', 'SubSetor', $editor, $this->dataset);
+            $editor = new ComboBox('subsetor_edit', $this->GetLocalizerCaptions()->GetMessageString('PleaseSelect'));
+            $editor->addChoice('GUAIANAZES', 'GUAIANAZES');
+            $editor->addChoice('ITAQUERA', 'ITAQUERA');
+            $editor->addChoice('SALETE', 'SALETE');
+            $editor->addChoice('SAO MIGUEL', 'SAO MIGUEL');
+            $editor->addChoice('TIRADENTES', 'TIRADENTES');
+            $editor->addChoice('OUTROS', 'OUTROS');
+            $editColumn = new CustomEditColumn('SubSetor', 'SubSetor', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
@@ -971,8 +958,22 @@
             //
             // Edit column for Id_Estado field
             //
-            $editor = new SpinEdit('id_estado_edit');
-            $editColumn = new CustomEditColumn('Id Estado', 'Id_Estado', $editor, $this->dataset);
+            $editor = new DynamicCombobox('id_estado_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`estado`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new StringField('uf')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Estado', 'Id_Estado', 'Id_Estado_nome', 'multi_edit_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search', $editor, $this->dataset, $lookupDataset, 'id', 'nome', '');
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
@@ -980,8 +981,22 @@
             //
             // Edit column for Id_Cidade field
             //
-            $editor = new SpinEdit('id_cidade_edit');
-            $editColumn = new CustomEditColumn('Id Cidade', 'Id_Cidade', $editor, $this->dataset);
+            $editor = new DynamicCombobox('id_cidade_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`cidade`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new IntegerField('estado')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Cidade', 'Id_Cidade', 'Id_Cidade_nome', 'multi_edit_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search', $editor, $this->dataset, $lookupDataset, 'id', 'nome', '');
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
@@ -1019,53 +1034,6 @@
             $grid->AddInsertColumn($editColumn);
             
             //
-            // Edit column for Id_Convocacao_Ministerio field
-            //
-            $editor = new SpinEdit('id_convocacao_ministerio_edit');
-            $editColumn = new CustomEditColumn('Id Convocacao Ministerio', 'Id_Convocacao_Ministerio', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
-            // Edit column for Id_Evento field
-            //
-            $editor = new DynamicCombobox('id_evento_edit', $this->CreateLinkBuilder());
-            $editor->setAllowClear(true);
-            $editor->setMinimumInputLength(0);
-            $lookupDataset = new TableDataset(
-                MySqlIConnectionFactory::getInstance(),
-                GetConnectionOptions(),
-                '`eventos`');
-            $lookupDataset->addFields(
-                array(
-                    new IntegerField('id_Evento', true, true),
-                    new StringField('Id_CCB'),
-                    new StringField('Ds_Evento'),
-                    new DateTimeField('Dt_Evento'),
-                    new TimeField('Hr_Inicio'),
-                    new TimeField('Hr_Termino'),
-                    new StringField('Ds_AtaEvento'),
-                    new StringField('anexo_evento')
-                )
-            );
-            $lookupDataset->setOrderByField('Ds_Evento', 'ASC');
-            $editColumn = new DynamicLookupEditColumn('Evento', 'Id_Evento', 'Id_Evento_Ds_Evento', 'insert_CHECKIN_EVENTO_MINISTERIO_Id_Evento_search', $editor, $this->dataset, $lookupDataset, 'id_Evento', 'Ds_Evento', '');
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
-            // Edit column for Dt_Hr_Chegada field
-            //
-            $editor = new DateTimeEdit('dt_hr_chegada_edit', false, 'Y-m-d H:i:s');
-            $editColumn = new CustomEditColumn('Dt Hr Chegada', 'Dt_Hr_Chegada', $editor, $this->dataset);
-            $editColumn->SetAllowSetToNull(true);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
             // Edit column for NomeCompleto field
             //
             $editor = new TextEdit('nomecompleto_edit');
@@ -1103,8 +1071,14 @@
             //
             // Edit column for SubSetor field
             //
-            $editor = new TextEdit('subsetor_edit');
-            $editColumn = new CustomEditColumn('Sub Setor', 'SubSetor', $editor, $this->dataset);
+            $editor = new ComboBox('subsetor_edit', $this->GetLocalizerCaptions()->GetMessageString('PleaseSelect'));
+            $editor->addChoice('GUAIANAZES', 'GUAIANAZES');
+            $editor->addChoice('ITAQUERA', 'ITAQUERA');
+            $editor->addChoice('SALETE', 'SALETE');
+            $editor->addChoice('SAO MIGUEL', 'SAO MIGUEL');
+            $editor->addChoice('TIRADENTES', 'TIRADENTES');
+            $editor->addChoice('OUTROS', 'OUTROS');
+            $editColumn = new CustomEditColumn('SubSetor', 'SubSetor', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
@@ -1121,8 +1095,22 @@
             //
             // Edit column for Id_Estado field
             //
-            $editor = new SpinEdit('id_estado_edit');
-            $editColumn = new CustomEditColumn('Id Estado', 'Id_Estado', $editor, $this->dataset);
+            $editor = new DynamicCombobox('id_estado_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`estado`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new StringField('uf')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Estado', 'Id_Estado', 'Id_Estado_nome', 'insert_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search', $editor, $this->dataset, $lookupDataset, 'id', 'nome', '');
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
@@ -1130,8 +1118,22 @@
             //
             // Edit column for Id_Cidade field
             //
-            $editor = new SpinEdit('id_cidade_edit');
-            $editColumn = new CustomEditColumn('Id Cidade', 'Id_Cidade', $editor, $this->dataset);
+            $editor = new DynamicCombobox('id_cidade_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`cidade`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new IntegerField('estado')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Cidade', 'Id_Cidade', 'Id_Cidade_nome', 'insert_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search', $editor, $this->dataset, $lookupDataset, 'id', 'nome', '');
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
@@ -1172,7 +1174,7 @@
             //
             // View column for Dt_Hr_Chegada field
             //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Dt Hr Chegada', $this->dataset);
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddPrintColumn($column);
@@ -1201,7 +1203,7 @@
             //
             // View column for SubSetor field
             //
-            $column = new TextViewColumn('SubSetor', 'SubSetor', 'Sub Setor', $this->dataset);
+            $column = new TextViewColumn('SubSetor', 'SubSetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
@@ -1213,23 +1215,17 @@
             $grid->AddPrintColumn($column);
             
             //
-            // View column for Id_Estado field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Estado', 'Id_Estado', 'Id Estado', $this->dataset);
+            $column = new TextViewColumn('Id_Estado', 'Id_Estado_nome', 'Estado', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddPrintColumn($column);
             
             //
-            // View column for Id_Cidade field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Cidade', 'Id_Cidade', 'Id Cidade', $this->dataset);
+            $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddPrintColumn($column);
         }
     
@@ -1262,7 +1258,7 @@
             //
             // View column for Dt_Hr_Chegada field
             //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Dt Hr Chegada', $this->dataset);
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddExportColumn($column);
@@ -1291,7 +1287,7 @@
             //
             // View column for SubSetor field
             //
-            $column = new TextViewColumn('SubSetor', 'SubSetor', 'Sub Setor', $this->dataset);
+            $column = new TextViewColumn('SubSetor', 'SubSetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
@@ -1303,23 +1299,17 @@
             $grid->AddExportColumn($column);
             
             //
-            // View column for Id_Estado field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Estado', 'Id_Estado', 'Id Estado', $this->dataset);
+            $column = new TextViewColumn('Id_Estado', 'Id_Estado_nome', 'Estado', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddExportColumn($column);
             
             //
-            // View column for Id_Cidade field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Cidade', 'Id_Cidade', 'Id Cidade', $this->dataset);
+            $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddExportColumn($column);
         }
     
@@ -1352,7 +1342,7 @@
             //
             // View column for Dt_Hr_Chegada field
             //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Dt Hr Chegada', $this->dataset);
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
             $column->SetOrderable(true);
             $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddCompareColumn($column);
@@ -1381,7 +1371,7 @@
             //
             // View column for SubSetor field
             //
-            $column = new TextViewColumn('SubSetor', 'SubSetor', 'Sub Setor', $this->dataset);
+            $column = new TextViewColumn('SubSetor', 'SubSetor', 'SubSetor', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
@@ -1393,23 +1383,17 @@
             $grid->AddCompareColumn($column);
             
             //
-            // View column for Id_Estado field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Estado', 'Id_Estado', 'Id Estado', $this->dataset);
+            $column = new TextViewColumn('Id_Estado', 'Id_Estado_nome', 'Estado', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddCompareColumn($column);
             
             //
-            // View column for Id_Cidade field
+            // View column for nome field
             //
-            $column = new NumberViewColumn('Id_Cidade', 'Id_Cidade', 'Id Cidade', $this->dataset);
+            $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
             $grid->AddCompareColumn($column);
         }
     
@@ -1526,21 +1510,31 @@
             $lookupDataset = new TableDataset(
                 MySqlIConnectionFactory::getInstance(),
                 GetConnectionOptions(),
-                '`eventos`');
+                '`estado`');
             $lookupDataset->addFields(
                 array(
-                    new IntegerField('id_Evento', true, true),
-                    new StringField('Id_CCB'),
-                    new StringField('Ds_Evento'),
-                    new DateTimeField('Dt_Evento'),
-                    new TimeField('Hr_Inicio'),
-                    new TimeField('Hr_Termino'),
-                    new StringField('Ds_AtaEvento'),
-                    new StringField('anexo_evento')
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new StringField('uf')
                 )
             );
-            $lookupDataset->setOrderByField('Ds_Evento', 'ASC');
-            $handler = new DynamicSearchHandler($lookupDataset, $this, 'insert_CHECKIN_EVENTO_MINISTERIO_Id_Evento_search', 'id_Evento', 'Ds_Evento', null, 20);
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'insert_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search', 'id', 'nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`cidade`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new IntegerField('estado')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'insert_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search', 'id', 'nome', null, 20);
             GetApplication()->RegisterHTTPHandler($handler);
             
             $lookupDataset = new TableDataset(
@@ -1587,6 +1581,36 @@
             $lookupDataset = new TableDataset(
                 MySqlIConnectionFactory::getInstance(),
                 GetConnectionOptions(),
+                '`estado`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new StringField('uf')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'filter_builder_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search', 'id', 'nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`cidade`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new IntegerField('estado')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'filter_builder_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search', 'id', 'nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
                 '`cadministerio`');
             $lookupDataset->addFields(
                 array(
@@ -1628,6 +1652,36 @@
             $lookupDataset = new TableDataset(
                 MySqlIConnectionFactory::getInstance(),
                 GetConnectionOptions(),
+                '`estado`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new StringField('uf')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'edit_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search', 'id', 'nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`cidade`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new IntegerField('estado')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'edit_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search', 'id', 'nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
                 '`cadministerio`');
             $lookupDataset->addFields(
                 array(
@@ -1664,6 +1718,36 @@
             );
             $lookupDataset->setOrderByField('Ds_Evento', 'ASC');
             $handler = new DynamicSearchHandler($lookupDataset, $this, 'multi_edit_CHECKIN_EVENTO_MINISTERIO_Id_Evento_search', 'id_Evento', 'Ds_Evento', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`estado`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new StringField('uf')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'multi_edit_CHECKIN_EVENTO_MINISTERIO_Id_Estado_search', 'id', 'nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MySqlIConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`cidade`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('id', true),
+                    new StringField('nome'),
+                    new IntegerField('estado')
+                )
+            );
+            $lookupDataset->setOrderByField('nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'multi_edit_CHECKIN_EVENTO_MINISTERIO_Id_Cidade_search', 'id', 'nome', null, 20);
             GetApplication()->RegisterHTTPHandler($handler);
         }
        

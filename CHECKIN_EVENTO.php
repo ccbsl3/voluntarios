@@ -48,7 +48,7 @@
             join sl3.cadcongregacoes c on v.Id_CCB = c.Id_CCB';
             $insertQuery = array('INSERT INTO convocacoeseventos
             (Id_Evento,Id_Voluntario,St_VoluntarioCompareceu,Dt_Hr_Chegada,Dt_Hr_Saida,ID_AUX) values
-            (:Id_Evento,:Id_Voluntario,\'SIM\',NOW(),NOW(),:ID_AUX)');
+            (\'1\',:Id_Voluntario,\'SIM\',NOW(),NOW(),:ID_AUX)');
             $updateQuery = array('UPDATE convocacoeseventos
             SET Id_Evento = :Id_Evento,
             Id_Voluntario = :Id_Voluntario,
@@ -770,35 +770,6 @@
         protected function AddInsertColumns(Grid $grid)
         {
             //
-            // Edit column for Id_Evento field
-            //
-            $editor = new DynamicCombobox('id_evento_edit', $this->CreateLinkBuilder());
-            $editor->setAllowClear(true);
-            $editor->setMinimumInputLength(0);
-            $lookupDataset = new TableDataset(
-                MySqlIConnectionFactory::getInstance(),
-                GetConnectionOptions(),
-                '`eventos`');
-            $lookupDataset->addFields(
-                array(
-                    new IntegerField('id_Evento', true, true),
-                    new StringField('Id_CCB'),
-                    new StringField('Ds_Evento'),
-                    new DateTimeField('Dt_Evento'),
-                    new TimeField('Hr_Inicio'),
-                    new TimeField('Hr_Termino'),
-                    new StringField('Ds_AtaEvento'),
-                    new StringField('anexo_evento')
-                )
-            );
-            $lookupDataset->setOrderByField('Ds_Evento', 'ASC');
-            $editColumn = new DynamicLookupEditColumn('Evento', 'Id_Evento', 'Id_Evento_Ds_Evento', 'insert_CHECKIN_EVENTO_Id_Evento_search', $editor, $this->dataset, $lookupDataset, 'id_Evento', 'Ds_Evento', '');
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
             // Edit column for ID_AUX field
             //
             $editor = new DynamicCombobox('id_aux_edit', $this->CreateLinkBuilder());
@@ -1238,26 +1209,6 @@
         }
     
         protected function doRegisterHandlers() {
-            $lookupDataset = new TableDataset(
-                MySqlIConnectionFactory::getInstance(),
-                GetConnectionOptions(),
-                '`eventos`');
-            $lookupDataset->addFields(
-                array(
-                    new IntegerField('id_Evento', true, true),
-                    new StringField('Id_CCB'),
-                    new StringField('Ds_Evento'),
-                    new DateTimeField('Dt_Evento'),
-                    new TimeField('Hr_Inicio'),
-                    new TimeField('Hr_Termino'),
-                    new StringField('Ds_AtaEvento'),
-                    new StringField('anexo_evento')
-                )
-            );
-            $lookupDataset->setOrderByField('Ds_Evento', 'ASC');
-            $handler = new DynamicSearchHandler($lookupDataset, $this, 'insert_CHECKIN_EVENTO_Id_Evento_search', 'id_Evento', 'Ds_Evento', null, 20);
-            GetApplication()->RegisterHTTPHandler($handler);
-            
             $lookupDataset = new TableDataset(
                 MySqlIConnectionFactory::getInstance(),
                 GetConnectionOptions(),

@@ -35,7 +35,7 @@ function OnBeforeLogout($userName, EngConnection $connection) {
 SetUpUserAuthorization();
 
 $page = new LoginPage(
-    'CONSULTAVOLUNTARIO.php',
+    'CHECKIN_EVENTO.php',
     dirname(__FILE__),
     GetApplication()->GetUserAuthentication(),
     MySqlIConnectionFactory::getInstance(),
