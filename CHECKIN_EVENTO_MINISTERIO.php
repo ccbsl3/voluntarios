@@ -126,14 +126,14 @@
                 new FilterColumn($this->dataset, 'Id_irmaoministerio', 'Id_irmaoministerio_NomeCompleto', 'Irmão Ministério'),
                 new FilterColumn($this->dataset, 'Id_Convocacao_Ministerio', 'Id_Convocacao_Ministerio', 'Id Convocacao Ministerio'),
                 new FilterColumn($this->dataset, 'Id_Evento', 'Id_Evento_Ds_Evento', 'Evento'),
-                new FilterColumn($this->dataset, 'Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada'),
                 new FilterColumn($this->dataset, 'NomeCompleto', 'NomeCompleto', 'Nome Completo'),
-                new FilterColumn($this->dataset, 'Ministerio', 'Ministerio', 'Ministerio'),
+                new FilterColumn($this->dataset, 'Ministerio', 'Ministerio', 'Ministério'),
                 new FilterColumn($this->dataset, 'Telefone', 'Telefone', 'Telefone'),
                 new FilterColumn($this->dataset, 'SubSetor', 'SubSetor', 'SubSetor'),
-                new FilterColumn($this->dataset, 'ComumCongregacao', 'ComumCongregacao', 'Comum Congregacao'),
+                new FilterColumn($this->dataset, 'ComumCongregacao', 'ComumCongregacao', 'Comum Congregação'),
                 new FilterColumn($this->dataset, 'Id_Estado', 'Id_Estado_nome', 'Estado'),
-                new FilterColumn($this->dataset, 'Id_Cidade', 'Id_Cidade_nome', 'Cidade')
+                new FilterColumn($this->dataset, 'Id_Cidade', 'Id_Cidade_nome', 'Cidade'),
+                new FilterColumn($this->dataset, 'Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada')
             );
         }
     
@@ -143,23 +143,23 @@
                 ->addColumn($columns['Id_irmaoministerio'])
                 ->addColumn($columns['Id_Convocacao_Ministerio'])
                 ->addColumn($columns['Id_Evento'])
-                ->addColumn($columns['Dt_Hr_Chegada'])
                 ->addColumn($columns['NomeCompleto'])
                 ->addColumn($columns['Ministerio'])
                 ->addColumn($columns['Telefone'])
                 ->addColumn($columns['SubSetor'])
                 ->addColumn($columns['ComumCongregacao'])
                 ->addColumn($columns['Id_Estado'])
-                ->addColumn($columns['Id_Cidade']);
+                ->addColumn($columns['Id_Cidade'])
+                ->addColumn($columns['Dt_Hr_Chegada']);
         }
     
         protected function setupColumnFilter(ColumnFilter $columnFilter)
         {
             $columnFilter
                 ->setOptionsFor('Id_Evento')
-                ->setOptionsFor('Dt_Hr_Chegada')
                 ->setOptionsFor('Id_Estado')
-                ->setOptionsFor('Id_Cidade');
+                ->setOptionsFor('Id_Cidade')
+                ->setOptionsFor('Dt_Hr_Chegada');
         }
     
         protected function setupFilterBuilder(FilterBuilder $filterBuilder, FixedKeysArray $columns)
@@ -244,27 +244,6 @@
                 )
             );
             
-            $main_editor = new DateTimeEdit('dt_hr_chegada_edit', false, 'Y-m-d H:i:s');
-            
-            $filterBuilder->addColumn(
-                $columns['Dt_Hr_Chegada'],
-                array(
-                    FilterConditionOperator::EQUALS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_BETWEEN => $main_editor,
-                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
-                    FilterConditionOperator::DATE_EQUALS => $main_editor,
-                    FilterConditionOperator::DATE_DOES_NOT_EQUAL => $main_editor,
-                    FilterConditionOperator::TODAY => null,
-                    FilterConditionOperator::IS_BLANK => null,
-                    FilterConditionOperator::IS_NOT_BLANK => null
-                )
-            );
-            
             $main_editor = new TextEdit('nomecompleto_edit');
             
             $filterBuilder->addColumn(
@@ -329,7 +308,9 @@
                 )
             );
             
-            $main_editor = new TextEdit('telefone_edit');
+            $main_editor = new MaskedEdit('telefone_edit', '(99) 9 9999-9999');
+            
+            $text_editor = new TextEdit('Telefone');
             
             $filterBuilder->addColumn(
                 $columns['Telefone'],
@@ -342,12 +323,12 @@
                     FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
                     FilterConditionOperator::IS_BETWEEN => $main_editor,
                     FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
-                    FilterConditionOperator::CONTAINS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_CONTAIN => $main_editor,
-                    FilterConditionOperator::BEGINS_WITH => $main_editor,
-                    FilterConditionOperator::ENDS_WITH => $main_editor,
-                    FilterConditionOperator::IS_LIKE => $main_editor,
-                    FilterConditionOperator::IS_NOT_LIKE => $main_editor,
+                    FilterConditionOperator::CONTAINS => $text_editor,
+                    FilterConditionOperator::DOES_NOT_CONTAIN => $text_editor,
+                    FilterConditionOperator::BEGINS_WITH => $text_editor,
+                    FilterConditionOperator::ENDS_WITH => $text_editor,
+                    FilterConditionOperator::IS_LIKE => $text_editor,
+                    FilterConditionOperator::IS_NOT_LIKE => $text_editor,
                     FilterConditionOperator::IS_BLANK => null,
                     FilterConditionOperator::IS_NOT_BLANK => null
                 )
@@ -468,6 +449,27 @@
                     FilterConditionOperator::IS_NOT_BLANK => null
                 )
             );
+            
+            $main_editor = new DateTimeEdit('dt_hr_chegada_edit', false, 'd.m.Y H:i:s');
+            
+            $filterBuilder->addColumn(
+                $columns['Dt_Hr_Chegada'],
+                array(
+                    FilterConditionOperator::EQUALS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_BETWEEN => $main_editor,
+                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
+                    FilterConditionOperator::DATE_EQUALS => $main_editor,
+                    FilterConditionOperator::DATE_DOES_NOT_EQUAL => $main_editor,
+                    FilterConditionOperator::TODAY => null,
+                    FilterConditionOperator::IS_BLANK => null,
+                    FilterConditionOperator::IS_NOT_BLANK => null
+                )
+            );
         }
     
         protected function AddOperationsColumns(Grid $grid)
@@ -522,17 +524,6 @@
             $grid->AddViewColumn($column);
             
             //
-            // View column for Dt_Hr_Chegada field
-            //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d H:i:s');
-            $column->setMinimalVisibility(ColumnVisibility::PHONE);
-            $column->SetDescription('');
-            $column->SetFixedWidth(null);
-            $grid->AddViewColumn($column);
-            
-            //
             // View column for NomeCompleto field
             //
             $column = new TextViewColumn('NomeCompleto', 'NomeCompleto', 'Nome Completo', $this->dataset);
@@ -545,7 +536,7 @@
             //
             // View column for Ministerio field
             //
-            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministerio', $this->dataset);
+            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministério', $this->dataset);
             $column->SetOrderable(true);
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
@@ -575,7 +566,7 @@
             //
             // View column for ComumCongregacao field
             //
-            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregacao', $this->dataset);
+            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregação', $this->dataset);
             $column->SetOrderable(true);
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
@@ -597,6 +588,17 @@
             //
             $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
+            $column->setMinimalVisibility(ColumnVisibility::PHONE);
+            $column->SetDescription('');
+            $column->SetFixedWidth(null);
+            $grid->AddViewColumn($column);
+            
+            //
+            // View column for Dt_Hr_Chegada field
+            //
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d H:i:s');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
             $column->SetFixedWidth(null);
@@ -613,14 +615,6 @@
             $grid->AddSingleRecordViewColumn($column);
             
             //
-            // View column for Dt_Hr_Chegada field
-            //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d H:i:s');
-            $grid->AddSingleRecordViewColumn($column);
-            
-            //
             // View column for NomeCompleto field
             //
             $column = new TextViewColumn('NomeCompleto', 'NomeCompleto', 'Nome Completo', $this->dataset);
@@ -630,7 +624,7 @@
             //
             // View column for Ministerio field
             //
-            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministerio', $this->dataset);
+            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministério', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
@@ -651,7 +645,7 @@
             //
             // View column for ComumCongregacao field
             //
-            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregacao', $this->dataset);
+            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregação', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
@@ -667,6 +661,14 @@
             //
             $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
+            $grid->AddSingleRecordViewColumn($column);
+            
+            //
+            // View column for Dt_Hr_Chegada field
+            //
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddSingleRecordViewColumn($column);
         }
     
@@ -751,7 +753,7 @@
             $editor->addChoice('Encarregado Local', 'Encarregado Local');
             $editor->addChoice('Examinadora', 'Examinadora');
             $editor->addChoice('Piedade', 'Piedade');
-            $editColumn = new CustomEditColumn('Ministerio', 'Ministerio', $editor, $this->dataset);
+            $editColumn = new CustomEditColumn('Ministério', 'Ministerio', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
@@ -759,7 +761,7 @@
             //
             // Edit column for Telefone field
             //
-            $editor = new TextEdit('telefone_edit');
+            $editor = new MaskedEdit('telefone_edit', '(99) 9 9999-9999');
             $editColumn = new CustomEditColumn('Telefone', 'Telefone', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -784,7 +786,7 @@
             // Edit column for ComumCongregacao field
             //
             $editor = new TextEdit('comumcongregacao_edit');
-            $editColumn = new CustomEditColumn('Comum Congregacao', 'ComumCongregacao', $editor, $this->dataset);
+            $editColumn = new CustomEditColumn('Comum Congregação', 'ComumCongregacao', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
@@ -917,7 +919,7 @@
             $editor->addChoice('Encarregado Local', 'Encarregado Local');
             $editor->addChoice('Examinadora', 'Examinadora');
             $editor->addChoice('Piedade', 'Piedade');
-            $editColumn = new CustomEditColumn('Ministerio', 'Ministerio', $editor, $this->dataset);
+            $editColumn = new CustomEditColumn('Ministério', 'Ministerio', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
@@ -925,7 +927,7 @@
             //
             // Edit column for Telefone field
             //
-            $editor = new TextEdit('telefone_edit');
+            $editor = new MaskedEdit('telefone_edit', '(99) 9 9999-9999');
             $editColumn = new CustomEditColumn('Telefone', 'Telefone', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -950,7 +952,7 @@
             // Edit column for ComumCongregacao field
             //
             $editor = new TextEdit('comumcongregacao_edit');
-            $editColumn = new CustomEditColumn('Comum Congregacao', 'ComumCongregacao', $editor, $this->dataset);
+            $editColumn = new CustomEditColumn('Comum Congregação', 'ComumCongregacao', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
@@ -1054,7 +1056,7 @@
             $editor->addChoice('Encarregado Local', 'Encarregado Local');
             $editor->addChoice('Examinadora', 'Examinadora');
             $editor->addChoice('Piedade', 'Piedade');
-            $editColumn = new CustomEditColumn('Ministerio', 'Ministerio', $editor, $this->dataset);
+            $editColumn = new CustomEditColumn('Ministério', 'Ministerio', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
@@ -1062,7 +1064,7 @@
             //
             // Edit column for Telefone field
             //
-            $editor = new TextEdit('telefone_edit');
+            $editor = new MaskedEdit('telefone_edit', '(99) 9 9999-9999');
             $editColumn = new CustomEditColumn('Telefone', 'Telefone', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -1087,7 +1089,7 @@
             // Edit column for ComumCongregacao field
             //
             $editor = new TextEdit('comumcongregacao_edit');
-            $editColumn = new CustomEditColumn('Comum Congregacao', 'ComumCongregacao', $editor, $this->dataset);
+            $editColumn = new CustomEditColumn('Comum Congregação', 'ComumCongregacao', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
@@ -1172,14 +1174,6 @@
             $grid->AddPrintColumn($column);
             
             //
-            // View column for Dt_Hr_Chegada field
-            //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d H:i:s');
-            $grid->AddPrintColumn($column);
-            
-            //
             // View column for NomeCompleto field
             //
             $column = new TextViewColumn('NomeCompleto', 'NomeCompleto', 'Nome Completo', $this->dataset);
@@ -1189,7 +1183,7 @@
             //
             // View column for Ministerio field
             //
-            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministerio', $this->dataset);
+            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministério', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
@@ -1210,7 +1204,7 @@
             //
             // View column for ComumCongregacao field
             //
-            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregacao', $this->dataset);
+            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregação', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
@@ -1226,6 +1220,14 @@
             //
             $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
+            $grid->AddPrintColumn($column);
+            
+            //
+            // View column for Dt_Hr_Chegada field
+            //
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddPrintColumn($column);
         }
     
@@ -1256,14 +1258,6 @@
             $grid->AddExportColumn($column);
             
             //
-            // View column for Dt_Hr_Chegada field
-            //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d H:i:s');
-            $grid->AddExportColumn($column);
-            
-            //
             // View column for NomeCompleto field
             //
             $column = new TextViewColumn('NomeCompleto', 'NomeCompleto', 'Nome Completo', $this->dataset);
@@ -1273,7 +1267,7 @@
             //
             // View column for Ministerio field
             //
-            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministerio', $this->dataset);
+            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministério', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
@@ -1294,7 +1288,7 @@
             //
             // View column for ComumCongregacao field
             //
-            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregacao', $this->dataset);
+            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregação', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
@@ -1310,6 +1304,14 @@
             //
             $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
+            $grid->AddExportColumn($column);
+            
+            //
+            // View column for Dt_Hr_Chegada field
+            //
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddExportColumn($column);
         }
     
@@ -1340,14 +1342,6 @@
             $grid->AddCompareColumn($column);
             
             //
-            // View column for Dt_Hr_Chegada field
-            //
-            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d H:i:s');
-            $grid->AddCompareColumn($column);
-            
-            //
             // View column for NomeCompleto field
             //
             $column = new TextViewColumn('NomeCompleto', 'NomeCompleto', 'Nome Completo', $this->dataset);
@@ -1357,7 +1351,7 @@
             //
             // View column for Ministerio field
             //
-            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministerio', $this->dataset);
+            $column = new TextViewColumn('Ministerio', 'Ministerio', 'Ministério', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
@@ -1378,7 +1372,7 @@
             //
             // View column for ComumCongregacao field
             //
-            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregacao', $this->dataset);
+            $column = new TextViewColumn('ComumCongregacao', 'ComumCongregacao', 'Comum Congregação', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
@@ -1394,6 +1388,14 @@
             //
             $column = new TextViewColumn('Id_Cidade', 'Id_Cidade_nome', 'Cidade', $this->dataset);
             $column->SetOrderable(true);
+            $grid->AddCompareColumn($column);
+            
+            //
+            // View column for Dt_Hr_Chegada field
+            //
+            $column = new DateTimeViewColumn('Dt_Hr_Chegada', 'Dt_Hr_Chegada', 'Hora Chegada', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d H:i:s');
             $grid->AddCompareColumn($column);
         }
     

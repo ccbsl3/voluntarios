@@ -69,7 +69,11 @@
             dt_alteracao = now(),
             NM_COMUM_CCB = UPPER(:NM_COMUM_CCB),
             CD_RG_VOLUNTARIO = UPPER(:CD_RG_VOLUNTARIO)
-            where id_aux = :old_id_aux');
+            where id_aux = :old_id_aux', 
+            'DELETE FROM convocacoeseventos WHERE id_aux = :old_id_aux AND Id_Evento = \'1\'', 
+            'INSERT INTO convocacoeseventos
+            (Id_Evento,Id_Voluntario,St_VoluntarioCompareceu,Dt_Hr_Chegada,Dt_Hr_Saida,ID_AUX) values
+            (\'1\',:Id_Voluntario,\'SIM\',NOW(),NOW(),:id_aux)');
             $deleteQuery = array('DELETE FROM cadvoluntarios WHERE id_aux = :old_id_aux');
             $this->dataset = new QueryDataset(
               MySqlIConnectionFactory::getInstance(), 
@@ -146,7 +150,7 @@
                 new FilterColumn($this->dataset, 'tel1_voluntario', 'tel1_voluntario', 'Telefone Fixo'),
                 new FilterColumn($this->dataset, 'tel2_voluntario', 'tel2_voluntario', 'Telefone Móvel'),
                 new FilterColumn($this->dataset, 'tel3_voluntario', 'tel3_voluntario', 'Telefone Adicional'),
-                new FilterColumn($this->dataset, 'foto_voluntario', 'foto_voluntario', 'Foto Voluntário'),
+                new FilterColumn($this->dataset, 'foto_voluntario', 'foto_voluntario', 'Foto Voluntario'),
                 new FilterColumn($this->dataset, 'thumb_voluntario', 'thumb_voluntario', 'Foto'),
                 new FilterColumn($this->dataset, 'DT_ALTERACAO', 'DT_ALTERACAO', 'Data Alteração')
             );
@@ -947,7 +951,7 @@
             //
             // View column for foto_voluntario field
             //
-            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntário', $this->dataset);
+            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntario', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
@@ -1153,7 +1157,7 @@
             $editor = new ImageUploader('foto_voluntario_edit');
             $editor->SetShowImage(true);
             $editor->setAcceptableFileTypes('image/*');
-            $editColumn = new UploadFileToFolderColumn('Foto Voluntário', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
+            $editColumn = new UploadFileToFolderColumn('Foto Voluntario', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
             $editColumn->SetReplaceUploadedFileIfExist(true);
             $editColumn->SetGenerationImageThumbnails(
                 'thumb_voluntario',
@@ -1162,15 +1166,6 @@
                 new ImageFitByHeightResizeFilter(30),
                 false
             );
-            $editColumn->SetAllowSetToNull(true);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddEditColumn($editColumn);
-            
-            //
-            // Edit column for DT_ALTERACAO field
-            //
-            $editor = new DateTimeEdit('dt_alteracao_edit', false, 'Y-m-d H:i:s');
-            $editColumn = new CustomEditColumn('Data Alteração', 'DT_ALTERACAO', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddEditColumn($editColumn);
@@ -1369,7 +1364,7 @@
             $editor = new ImageUploader('foto_voluntario_edit');
             $editor->SetShowImage(true);
             $editor->setAcceptableFileTypes('image/*');
-            $editColumn = new UploadFileToFolderColumn('Foto Voluntário', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
+            $editColumn = new UploadFileToFolderColumn('Foto Voluntario', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
             $editColumn->SetReplaceUploadedFileIfExist(true);
             $editColumn->SetGenerationImageThumbnails(
                 'thumb_voluntario',
@@ -1378,15 +1373,6 @@
                 new ImageFitByHeightResizeFilter(30),
                 false
             );
-            $editColumn->SetAllowSetToNull(true);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddMultiEditColumn($editColumn);
-            
-            //
-            // Edit column for DT_ALTERACAO field
-            //
-            $editor = new DateTimeEdit('dt_alteracao_edit', false, 'Y-m-d H:i:s');
-            $editColumn = new CustomEditColumn('Data Alteração', 'DT_ALTERACAO', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddMultiEditColumn($editColumn);
@@ -1585,7 +1571,7 @@
             $editor = new ImageUploader('foto_voluntario_edit');
             $editor->SetShowImage(true);
             $editor->setAcceptableFileTypes('image/*');
-            $editColumn = new UploadFileToFolderColumn('Foto Voluntário', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
+            $editColumn = new UploadFileToFolderColumn('Foto Voluntario', 'foto_voluntario', $editor, $this->dataset, false, false, 'fotovoluntario/', '%random%.%original_file_extension%', $this->OnFileUpload, false);
             $editColumn->SetReplaceUploadedFileIfExist(true);
             $editColumn->SetGenerationImageThumbnails(
                 'thumb_voluntario',
@@ -1594,15 +1580,6 @@
                 new ImageFitByHeightResizeFilter(30),
                 false
             );
-            $editColumn->SetAllowSetToNull(true);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
-            // Edit column for DT_ALTERACAO field
-            //
-            $editor = new DateTimeEdit('dt_alteracao_edit', false, 'Y-m-d H:i:s');
-            $editColumn = new CustomEditColumn('Data Alteração', 'DT_ALTERACAO', $editor, $this->dataset);
             $editColumn->SetAllowSetToNull(true);
             $this->ApplyCommonColumnEditProperties($editColumn);
             $grid->AddInsertColumn($editColumn);
@@ -1727,7 +1704,7 @@
             //
             // View column for foto_voluntario field
             //
-            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntário', $this->dataset);
+            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntario', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddPrintColumn($column);
             
@@ -1860,7 +1837,7 @@
             //
             // View column for foto_voluntario field
             //
-            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntário', $this->dataset);
+            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntario', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddExportColumn($column);
             
@@ -1983,7 +1960,7 @@
             //
             // View column for foto_voluntario field
             //
-            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntário', $this->dataset);
+            $column = new ExternalImageViewColumn('foto_voluntario', 'foto_voluntario', 'Foto Voluntario', $this->dataset);
             $column->SetOrderable(true);
             $grid->AddCompareColumn($column);
             
